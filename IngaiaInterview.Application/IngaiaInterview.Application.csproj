@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IngaiaInterview.Domain\IngaiaInterview.Domain.csproj" />
+    <ProjectReference Include="..\IngaiaInterview.Repository\IngaiaInterview.Repository.csproj" />
   </ItemGroup>
 
 </Project>

@@ -30,7 +30,8 @@ namespace IngaiaInterview.WebApi.Filters
             context.HttpContext.Response.StatusCode = (int)code;
             context.Result = new JsonResult(new
             {
-                error = context.Exception.Message
+                error = context.Exception.Message,
+                stacktrace = context.Exception.StackTrace
             });
         }
     }

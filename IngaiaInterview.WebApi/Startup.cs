@@ -9,6 +9,7 @@ using IngaiaInterview.Application.Playlist.Queries.GetPlaylistForCity;
 using IngaiaInterview.Domain.Music;
 using IngaiaInterview.Domain.Weather;
 using IngaiaInterview.Infrastructure;
+using IngaiaInterview.Repository;
 using IngaiaInterview.Repository.Music;
 using IngaiaInterview.Repository.Weather;
 using IngaiaInterview.WebApi.Filters;
@@ -17,11 +18,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using NodaTime;
 
 namespace IngaiaInterview.WebApi
 {
@@ -47,6 +50,7 @@ namespace IngaiaInterview.WebApi
 
             services.AddMediatR(typeof(GetPlaylistForCityQuery).GetTypeInfo().Assembly);
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+            services.AddSingleton<IClock>(SystemClock.Instance);
 
             services.AddTransient<EnvironmentSettings>(s =>
             {
@@ -63,6 +67,9 @@ namespace IngaiaInterview.WebApi
 
                 return settings;
             });
+
+            services.AddDbContext<IngaiaInterviewDbContext>(options =>
+            options.UseNpgsql(ConvertUrlConnectionString(Configuration.GetValue<string>("DATABASE_URL"))));
 
             services.AddMvc(options => options.Filters.Add(typeof(ExceptionsFilterAttribute)))
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<GetPlaylistForCityQueryValidator>());
@@ -81,9 +88,10 @@ namespace IngaiaInterview.WebApi
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseHttpsRedirection();
+
             app.UseSwagger();
             
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 
@@ -99,6 +107,19 @@ namespace IngaiaInterview.WebApi
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ingaia Interview");
                 c.RoutePrefix = "";
             });
+        }
+
+        private static string ConvertUrlConnectionString(string url)
+        {
+            var uri = new Uri(url);
+            var host = uri.Host;
+            var port = uri.Port;
+            var database = uri.Segments.Last();
+            var parts = uri.AbsoluteUri.Split(':', '/', '@');
+            var user = parts[3];
+            var password = parts[4];
+
+            return $"host={host}; port={port}; database={database}; username={user}; password={password}; SSL Mode=Prefer; Trust Server Certificate=true";
         }
     }
 }

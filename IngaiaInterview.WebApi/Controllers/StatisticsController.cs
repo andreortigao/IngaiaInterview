@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IngaiaInterview.Application.Statistics.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,10 @@ namespace IngaiaInterview.WebApi.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IList<CitySearchStatisticsModel>), 200)]
         public async Task<IActionResult> Index()
         {
-            throw new NotImplementedException();
+            return Ok(await _mediator.Send(new GetCitySearchStatisticsQuery()));
         }
     }
 }
